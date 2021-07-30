@@ -17,11 +17,18 @@ Another limitation is the usage of JSON Lines files. This is an extension to the
 ### Human-friendly editing
 
 As described above, JSON Lines files is required by GPT-3 to train the model. However, this format is very unfriendly for human reading. For example:
+
 ```JSON
 {"prompt":"Company: Gousto\nFeatures: 50+ recipes a week, cooked from 10 mins. Family classics, global cuisines plus Joe Wicks's health range. Tasty plant based and gluten free options. Fresh ingredients from trusted suppliers. 100% British meat. All recipes tried, tested and loved by our chefs and customers. Easy-to-follow recipe cards. Precise ingredients with zero food waste. Free, contactless delivery, any day you like.\n\n###\n\n", "completion":"Product: Recipe kit boxes which include ready-measured, fresh ingredients and easily followed recipes.\nHeadline: Endless choice in a recipe box\nSupporting copy: Over 50 recipes every week.\nCall to action: Get started\n"}
 ```
 
 Thus, a helper was written in `dehumanize.py` to accept CSV formats which are much human-friendly than editing JSON Lines files directly.
+
+### Ignoring unchanged databases
+
+When the databases have not been modified, the code just ignores it. This protects against creating training duplicated datasets which uses disk space.
+
+Last changes made to either `db.csv` and `db.numbers` are logged in `changelog.txt`.
 
 ## References
 
