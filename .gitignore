@@ -2,8 +2,12 @@
 *.code-workspace
 *.DS_Store
 *.pyc
+*.csv
+*.numbers
+*.jsonl
 
 # files
+trained_models.txt
 data/changelog.txt
 
 # folders
