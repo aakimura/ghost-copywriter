@@ -1,2 +1,10 @@
-# files
+# file types
 *.code-workspace
+*.DS_Store
+*.pyc
+
+# files
+data/changelog.txt
+
+# folders
+/__pycache__
