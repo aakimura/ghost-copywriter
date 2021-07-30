@@ -144,10 +144,10 @@ def create_dataset(csv, prompt=None, completion=None, target_path=None):
 
         # Add the final separator
         df['prompt'] = df['prompt'] + '\n\n###\n\n'
-        prompt_name = ''.join(prompt_name)
+        prompt_name = ''.join(prompt_name) + completion[0:4]
     else:
         df['prompt'] = df[prompt] + '\n\n###\n\n'
-        prompt_name = prompt[0:4]
+        prompt_name = prompt[0:4] + completion[0:4]
 
     train = df.loc[:,['prompt', completion]]
     train = train.rename(columns={completion:'completion'})
