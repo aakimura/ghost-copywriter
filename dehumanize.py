@@ -4,6 +4,7 @@ import unidecode
 
 from os import getcwd, path, stat
 from datetime import datetime
+from numpy import mean, floor
 
 
 # constants
@@ -28,6 +29,29 @@ def promptize(df, col_name):
     """
     text = df[col_name].apply(lambda x: unidecode.unidecode(x))
     return col_name + ': ' + text + '\n'
+
+
+def name_style(prompts, completion):
+    """
+    Give name to the data set style given a string or a list
+    
+    Paramaters
+    ----------
+    prompts: [string or list] Representation of the inputs used
+    completion: [string] Representation of the output
+
+    Returns
+    -------
+    Style string.
+    """
+    if type(prompts) == list:
+        return ''.join(
+            [string[0:4] for string in prompts]) + '-' + completion[0:4]
+    elif type(prompts) == str:
+        return prompts[0:4] + '-' + completion[0:4]
+    else:
+        raise ValueError(
+            "The prompt you provided should be a list or a string")
 
 
 def which_changed():
@@ -89,7 +113,7 @@ def in_log(style):
 
     Parameters
     ----------
-    style: [string] Representation of the style of the training set.
+    style: [string or list] Representation of the style of the training set.
 
     Returns
     -------
@@ -99,21 +123,21 @@ def in_log(style):
     with open(path.join(DATAPATH, 'changelog.txt'), 'r') as f:
         log = f.readlines()
 
-        # Check if style was a.readlines()y exported
-        if is_substring(style, log):
-            return True
+        # Check if style was exported already
+        if type(style) == list:
+            return bool(floor(mean([is_substring(string, log)])))
         else:
-            return False
+            return is_substring(style, log)
 
 
-def create_dataset(csv, prompt=None, completion=None, target_path=None):
+def create_dataset(df, prompt=None, completion=None, target_path=None):
     """
     Takes a CSV and creates a dataset with the arguments passed
 
     Parameters
     ----------
-    csv: [string] Path of CSV file.
-    prompt: [string] Column(s) that will be GPT-3's prompt.
+    df: [pandas.DataFrame] Data frame containing the database.
+    prompt: [string or list] Column(s) that will be GPT-3's prompt.
     completion: [string] Column that will be GPT-3's completion.
 
     Returns
@@ -124,7 +148,6 @@ def create_dataset(csv, prompt=None, completion=None, target_path=None):
     ------
     JSON Lines file with the prompt and completion
     """
-    df = pd.read_csv(csv)
     timestamp = datetime.now().strftime('%Y%m%d%H%M')
 
     # get target path
@@ -135,35 +158,32 @@ def create_dataset(csv, prompt=None, completion=None, target_path=None):
     if type(prompt) == list:
         # Initialize completion column with first prompt
         df['prompt'] = promptize(df, prompt[0])
-        prompt_name = []
 
         # Join subsequent prompts
         for col in prompt[1:]:            
             df['prompt'] = df['prompt'] + promptize(df, col)
-            prompt_name.append(col[0])
 
         # Add the final separator
         df['prompt'] = df['prompt'] + '\n\n###\n\n'
-        prompt_name = ''.join(prompt_name) + completion[0:4]
     else:
         df['prompt'] = df[prompt] + '\n\n###\n\n'
-        prompt_name = prompt[0:4] + completion[0:4]
 
     train = df.loc[:,['prompt', completion]]
     train = train.rename(columns={completion:'completion'})
-    filename = prompt_name + timestamp + '.jsonl'
+    filename = name_style(prompt, completion) + timestamp + '.jsonl'
     filepath = path.join(target_path, filename)
+
     return train.to_json(filepath, orient='records', lines=True)
 
 
 # Main functions
-def convert(csv, style=None, target_path=None):
+def convert(df, style=None, target_path=None):
     """
     Converts CSV file to JSON Lines format
     
     Parameters
     ----------
-    csv: [string] Path of the input CSV file.
+    df: [pandas.DataFrame] Data frame containing the database
     style: [string] Indicates the type of training dataset that will be
            converted into. Available options are:
            'feat-prod': From feature specifications to product description.
@@ -180,24 +200,33 @@ def convert(csv, style=None, target_path=None):
     """    
     # export the right training set
     if style == 'feat-prod':
-        return create_dataset(csv, prompt='features', completion='product')
+        return create_dataset(df, prompt='features', completion='product')
     elif style == 'feat-head':
-        return create_dataset(csv, prompt='features', completion='headline')
+        return create_dataset(df, prompt='features', completion='headline')
     elif style == 'prod-head':
-        return create_dataset(csv, prompt='product', completion='headline')
+        return create_dataset(df, prompt='product', completion='headline')
     else:
         raise ValueError('\U0001F635 The value you chose is invalid')
 
 
 if __name__ == '__main__':
     changes = which_changed()
-    choice = input("Choose style (feat-prod, feat-head or prod-head): ")
-    if not in_log(choice) or changes == 'both':
-        if choice not in ['feat-prod', 'feat-head', 'prod-head']:
-            raise ValueError("\U0001F635 The value you chose is invalid.\n")
-        else:
-            csv = path.join(DATAPATH, 'db.csv')
-            convert(csv=csv, style=choice)
+    df = pd.read_csv(path.join(DATAPATH, 'db.csv'))
+    available = ', '.join([col for col in df.columns])
+
+    prompt = input("Choose prompts. Available choices: " + available + ': ')
+    prompt = prompt.split(', ')
+    completion = input("Choose compeltion: ")
+
+    # Check that choices are valid
+    if not set(prompt).issubset(df.columns):
+        raise ValueError("\U0001F635 The value you chose is invalid.\n")
+
+    if len(prompt) == 1:
+        prompt = prompt[0]
+
+    if not in_log(name_style(prompt, completion)) or changes == 'both':
+            create_dataset(df, prompt=prompt, completion=completion)
 
             # log changes
             with open(path.join(DATAPATH, 'changelog.txt'), 'r') as f:
@@ -205,9 +234,9 @@ if __name__ == '__main__':
 
             if is_substring('exports', log):
                 exports = [
-                    ', '.join([item, choice]) for item in log if 'exports' in item][0]
+                    ', '.join([item, name_style(prompt, completion)]) for item in log if 'exports' in item][0]
             else:
-                exports = 'exports: ' + choice
+                exports = 'exports: ' + name_style(prompt, completion)
             
             # Erase file
             open(path.join(DATAPATH, 'changelog.txt')).close()
