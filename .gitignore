@@ -7,7 +7,7 @@
 *.jsonl
 
 # files
-trained_models.txt
+trained_models.md
 data/changelog.txt
 
 # folders
