@@ -1,7 +1,8 @@
 import openai
 
 
-def generate(model, prompt, temperature):
+def generate(model, prompt, temperature=0.5, top_p=1,frequency_penalty=0,
+             presence_penalty=0, stop='.\n\n'):
     """
     Generate a completion with a new prompt using a pre-trained model
 
@@ -22,6 +23,10 @@ def generate(model, prompt, temperature):
         model=model,
         prompt=prompt,
         temperature=temperature,
-        max_tokens=250)
+        top_p=top_p,
+        frequency_penalty=frequency_penalty,
+        presence_penalty=presence_penalty,
+        stop=stop,
+        max_tokens=60)
 
     return completion
