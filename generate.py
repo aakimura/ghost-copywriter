@@ -64,7 +64,7 @@ def create_completion(model, prompt, temperature=0.5,
     prompt: [string] Text block containing your prompt. Remember to use the
             same parameters as the ones you used to train your model.
             Finish your prompt with `\n\n###\n\n`.and
-    tempereature: [float] Control how creative the model should be. 1 = most
+    temperature: [float] Control how creative the model should be. 1 = most
                   creative, 0 = more 'robotic' or strict.
 
     Returns
