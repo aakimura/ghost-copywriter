@@ -26,7 +26,7 @@ Thus, a helper was written in `dehumanize.py` to accept CSV formats which are mu
 
 ### Ignoring unchanged databases
 
-When the databases have not been modified, the code just ignores it. This protects against creating training duplicated datasets which uses disk space.
+When the databases have not been modified, the code just ignores it. This protects against creating duplicated training sets which uses disk space.
 
 Last changes made to either `db.csv` and `db.numbers` are logged in `changelog.txt`.
 
