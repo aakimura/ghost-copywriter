@@ -12,3 +12,4 @@ data/changelog.txt
 
 # folders
 /__pycache__
+venv
